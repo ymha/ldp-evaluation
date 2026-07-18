@@ -1096,7 +1096,7 @@ def make_privunitg_paper(Z_pub_norm: np.ndarray, percentile: float = PERCENTILE)
 
 def compute_jacobian_row_space(model: torch.nn.Module, Z_pub: torch.Tensor,
                                n_samples: int = 500,
-                               sv_gap_ratio: float = 1e-2) -> np.ndarray:
+                               sv_gap_ratio: float = 1e-5) -> np.ndarray:
     """Aggregate Jacobians and extract a clean row-space basis matrix.
 
     Stacks per-sample Jacobians into B ∈ ℝ^{(n_samples*K) × D}, then uses SVD
