@@ -11,7 +11,7 @@ LAMBDA_N   = 1000.0
 DELTA      = 1e-5
 
 
-def _project_l1(z: np.ndarray, rho: float) -> np.ndarray:
+def _clip_l1_radial(z: np.ndarray, rho: float) -> np.ndarray:
     """Clip each row of z to L1 ball of radius ρ via scalar scaling."""
     norms = np.abs(z).sum(axis=1, keepdims=True)
     scale = np.minimum(1.0, rho / np.maximum(norms, 1e-10))
@@ -149,7 +149,7 @@ class L1ClipLaplace:
                rng: np.random.Generator = None) -> np.ndarray:
         if rng is None:
             rng = np.random.default_rng()
-        z_clip = _project_l1(z, self._rho)
+        z_clip = _clip_l1_radial(z, self._rho)
         return z_clip + rng.laplace(0, 2 * self._rho / eps, z_clip.shape)
 
     def decode(self, z_enc: np.ndarray) -> np.ndarray:
@@ -207,7 +207,7 @@ def make_laplace_pa(W, features, bounds, Z_pub_norm,
             if rng is None:
                 rng = np.random.default_rng()
             z_sc = (z - mu) @ U * inv_sqrt_l
-            z_cl = _project_l1(z_sc, rho)
+            z_cl = _clip_l1_radial(z_sc, rho)
             return z_cl + rng.laplace(0, 2.0 * rho / epsilon, z_cl.shape)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
@@ -439,7 +439,7 @@ def make_l1clip_privunit2(Z_pub_norm: np.ndarray, percentile: float = PERCENTILE
     class _L1ClipPrivUnit2:
         def encode(self, z: np.ndarray, epsilon: float,
                    rng: np.random.Generator = None) -> np.ndarray:
-            return inner.encode(_project_l1(z, rho_l1), epsilon, rng)
+            return inner.encode(_clip_l1_radial(z, rho_l1), epsilon, rng)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
             return z_enc
@@ -455,7 +455,7 @@ def make_l1clip_privunitg(Z_pub_norm: np.ndarray, percentile: float = PERCENTILE
     class _L1ClipPrivUnitG:
         def encode(self, z: np.ndarray, epsilon: float,
                    rng: np.random.Generator = None) -> np.ndarray:
-            return inner.encode(_project_l1(z, rho_l1), epsilon, rng)
+            return inner.encode(_clip_l1_radial(z, rho_l1), epsilon, rng)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
             return z_enc
@@ -478,7 +478,7 @@ def make_laplace_pa_no_post_proc(W, features, bounds, Z_pub_norm,
             if rng is None:
                 rng = np.random.default_rng()
             z_sc = (z - mu) @ U * inv_sqrt_l
-            z_cl = _project_l1(z_sc, rho)
+            z_cl = _clip_l1_radial(z_sc, rho)
             return z_cl + rng.laplace(0, 2.0 * rho / epsilon, z_cl.shape)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
@@ -499,7 +499,7 @@ def make_privunit2_opt_pa_no_post_proc(W, features, bounds, Z_pub_norm,
         def encode(self, z: np.ndarray, epsilon: float,
                    rng: np.random.Generator = None) -> np.ndarray:
             x = (z - mu) @ U * inv_sqrt_l
-            return inner.encode(_project_l1(x, rho_l1), epsilon, rng)
+            return inner.encode(_clip_l1_radial(x, rho_l1), epsilon, rng)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
             return z_enc
@@ -519,7 +519,7 @@ def make_privunitg_mc_no_post_proc(W, features, bounds, Z_pub_norm,
         def encode(self, z: np.ndarray, epsilon: float,
                    rng: np.random.Generator = None) -> np.ndarray:
             x = (z - mu) @ U * inv_sqrt_l
-            return inner.encode(_project_l1(x, rho_l1), epsilon, rng)
+            return inner.encode(_clip_l1_radial(x, rho_l1), epsilon, rng)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
             return z_enc
@@ -542,7 +542,7 @@ def make_laplace_no_reshaping(W, features, bounds, Z_pub_norm,
             if rng is None:
                 rng = np.random.default_rng()
             x_rot = (z - mu) @ U
-            z_cl  = _project_l1(x_rot, rho)
+            z_cl  = _clip_l1_radial(x_rot, rho)
             return z_cl + rng.laplace(0, 2.0 * rho / epsilon, z_cl.shape)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
@@ -600,7 +600,7 @@ def make_l1clip_laplace_pa_no_pre_proc(W, features, bounds, Z_pub_norm,
                    rng: np.random.Generator = None) -> np.ndarray:
             if rng is None:
                 rng = np.random.default_rng()
-            z_cl = _project_l1(z, rho)
+            z_cl = _clip_l1_radial(z, rho)
             return z_cl + rng.laplace(0, 2.0 * rho / epsilon, z_cl.shape)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
@@ -657,7 +657,7 @@ def make_pa_l1clip_privunit2(W, features, bounds, Z_pub_norm,
         def encode(self, z: np.ndarray, epsilon: float,
                    rng: np.random.Generator = None) -> np.ndarray:
             x = (z - mu) @ U * inv_sqrt_l
-            return inner.encode(_project_l1(x, rho_l1), epsilon, rng)
+            return inner.encode(_clip_l1_radial(x, rho_l1), epsilon, rng)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
             return (inner.decode(z_enc) * sqrt_l) @ U.T + mu
@@ -677,7 +677,7 @@ def make_pa_l1clip_privunitg(W, features, bounds, Z_pub_norm,
         def encode(self, z: np.ndarray, epsilon: float,
                    rng: np.random.Generator = None) -> np.ndarray:
             x = (z - mu) @ U * inv_sqrt_l
-            return inner.encode(_project_l1(x, rho_l1), epsilon, rng)
+            return inner.encode(_clip_l1_radial(x, rho_l1), epsilon, rng)
 
         def decode(self, z_enc: np.ndarray) -> np.ndarray:
             return (inner.decode(z_enc) * sqrt_l) @ U.T + mu
